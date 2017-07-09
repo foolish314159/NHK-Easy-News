@@ -1,7 +1,7 @@
 package com.github.foolish314159.nhkeasynews
 
 /**
- * Created by Tom on 09.07.2017.
+ * Utility functions to access various URLs from NHK Easy News website
  */
 class URLHelper {
 

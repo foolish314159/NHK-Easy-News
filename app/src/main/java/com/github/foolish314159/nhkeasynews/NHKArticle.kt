@@ -8,7 +8,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Created by Tom on 09.07.2017.
+ * Base class for articles, deals with loading the text either locally or from web
  */
 class NHKArticle(id: String, hasVideo: Boolean) {
 
@@ -31,7 +31,7 @@ class NHKArticle(id: String, hasVideo: Boolean) {
         var reader: InputStreamReader? = null
         try {
             reader = InputStreamReader(file.inputStream())
-            val text = reader?.readText()
+            val text = reader.readText()
             handler(text)
         } catch (e: Exception) {
             // if loading from local file fails, try to read from web instead
@@ -49,11 +49,12 @@ class NHKArticle(id: String, hasVideo: Boolean) {
             try {
                 val url = URL(articleURL)
                 connection = url.openConnection() as HttpURLConnection
-                connection?.setRequestProperty("Content-Type", "text/html; charset=utf-8")
-                val input = BufferedInputStream(connection?.inputStream)
-                reader = InputStreamReader(input)
+                connection.setRequestProperty("Content-Type", "text/html; charset=utf-8")
+                reader = InputStreamReader(BufferedInputStream(connection.inputStream))
+
                 val html = reader.readText()
-                var text = parseArticleFromHtml(html)
+                val text = parseArticleFromHtml(html)
+
                 saveArticleToInternalStorage(activity, text)
                 activity.runOnUiThread { handler(text) }
             } catch (e: Exception) {
@@ -66,14 +67,20 @@ class NHKArticle(id: String, hasVideo: Boolean) {
         thread.start()
     }
 
+    /**
+     * Read only the div containing the article and change javascript links to jisho.org links
+     */
     private fun parseArticleFromHtml(html: String): String {
         val doc = Jsoup.parse(html)
-        var links = doc.select(".dicWin")
+        val links = doc.select(".dicWin")
         links.forEach { link ->
+            // remove <rt> tags to get the actual vocabulary without furigana
             link.select("rt").forEach() {
                 it.remove()
             }
             val vocabulary = link.text()
+
+            // replace javascript links with jisho.org links
             link.attr("href", "http://jisho.org/search/$vocabulary")
         }
         return doc.select("#newsarticle").first().html()
@@ -86,7 +93,7 @@ class NHKArticle(id: String, hasVideo: Boolean) {
             output.write(html)
             output.flush()
         } catch (e: Exception) {
-            // ignore, next time will be loaded from web again
+            // if we couldn't save file, ignore and next time load from web again
         } finally {
             output?.close()
         }

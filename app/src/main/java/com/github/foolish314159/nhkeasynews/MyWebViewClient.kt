@@ -7,7 +7,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 
 /**
- * Created by Tom on 09.07.2017.
+ * Custom WebViewClient
+ * Opens URL links in same view
  */
 class MyWebViewClient : WebViewClient() {
 
@@ -17,6 +18,8 @@ class MyWebViewClient : WebViewClient() {
         return true
     }
 
+    // Probably needed for version before API level 21?
+    @Suppress("OverridingDeprecatedMember")
     override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
         view?.loadUrl(url)
         return true
