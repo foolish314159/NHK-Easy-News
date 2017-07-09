@@ -71,19 +71,23 @@ class NHKArticle(id: String, hasVideo: Boolean) {
      * Read only the div containing the article and change javascript links to jisho.org links
      */
     private fun parseArticleFromHtml(html: String): String {
-        val doc = Jsoup.parse(html)
-        val links = doc.select(".dicWin")
-        links.forEach { link ->
-            // remove <rt> tags to get the actual vocabulary without furigana
-            link.select("rt").forEach() {
-                it.remove()
-            }
-            val vocabulary = link.text()
+        try {
+            val doc = Jsoup.parse(html)
+            val links = doc.select(".dicWin")
+            links.forEach { link ->
+                // remove <rt> tags to get the actual vocabulary without furigana
+                link.select("rt").forEach() {
+                    it.remove()
+                }
+                val vocabulary = link.text()
 
-            // replace javascript links with jisho.org links
-            link.attr("href", "http://jisho.org/search/$vocabulary")
+                // replace javascript links with jisho.org links
+                link.attr("href", "http://jisho.org/search/$vocabulary")
+            }
+            return doc.select("#newsarticle").first().html()
+        } catch (e: Exception) {
+            return "Could not load article"
         }
-        return doc.select("#newsarticle").first().html()
     }
 
     private fun saveArticleToInternalStorage(activity: Activity, html: String) {
