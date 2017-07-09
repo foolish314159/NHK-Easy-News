@@ -15,7 +15,7 @@ class NHKArticle(id: String, hasVideo: Boolean) {
     val articleId = id
     val hasVideo = hasVideo
 
-    fun loadArticleText(activity: Activity, handler: (String?) -> Unit) {
+    fun loadArticleText(activity: Activity, handler: (String) -> Unit) {
         activity.filesDir.listFiles().forEach {
             if (it.name.contains(articleId)) {
                 // load from local file, if article has been opened
@@ -27,7 +27,7 @@ class NHKArticle(id: String, hasVideo: Boolean) {
         loadArticleFromWeb(activity, handler)
     }
 
-    private fun loadArticleFromInternalStorage(activity: Activity, file: File, handler: (String?) -> Unit) {
+    private fun loadArticleFromInternalStorage(activity: Activity, file: File, handler: (String) -> Unit) {
         var reader: InputStreamReader? = null
         try {
             reader = InputStreamReader(file.inputStream())
@@ -41,7 +41,7 @@ class NHKArticle(id: String, hasVideo: Boolean) {
         }
     }
 
-    private fun loadArticleFromWeb(activity: Activity, handler: (String?) -> Unit) {
+    private fun loadArticleFromWeb(activity: Activity, handler: (String) -> Unit) {
         val thread = Thread(Runnable {
             val articleURL = URLHelper.articleURL(articleId)
             var connection: HttpURLConnection? = null
@@ -58,7 +58,7 @@ class NHKArticle(id: String, hasVideo: Boolean) {
                 saveArticleToInternalStorage(activity, text)
                 activity.runOnUiThread { handler(text) }
             } catch (e: Exception) {
-                activity.runOnUiThread { handler(null) }
+                activity.runOnUiThread { handler("Could not load article") }
             } finally {
                 reader?.close()
                 connection?.disconnect()

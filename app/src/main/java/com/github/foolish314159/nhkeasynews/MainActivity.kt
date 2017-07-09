@@ -23,11 +23,7 @@ class MainActivity : AppCompatActivity() {
 
         val testArticle = NHKArticle("k10011047501000", false)
         testArticle.loadArticleText(this) { response ->
-            if (response != null) {
-                print(response)
-                this.articleWebView.settings.javaScriptEnabled = true
-                this.articleWebView.loadData(response, "text/html", "utf-8")
-            }
+            this.articleWebView.loadData(response, "text/html", "utf-8")
         }
     }
 }
