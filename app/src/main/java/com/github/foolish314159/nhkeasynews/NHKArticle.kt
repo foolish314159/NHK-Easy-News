@@ -54,9 +54,11 @@ class NHKArticle(id: String, hasVideo: Boolean) {
 
                 val html = reader.readText()
                 val text = parseArticleFromHtml(html)
+                val styledText = addStylesheet(text)
 
-                saveArticleToInternalStorage(activity, text)
-                activity.runOnUiThread { handler(text) }
+                // TODO: disabled while testing parser
+                //saveArticleToInternalStorage(activity, styledText)
+                activity.runOnUiThread { handler(styledText) }
             } catch (e: Exception) {
                 activity.runOnUiThread { handler("Could not load article") }
             } finally {
@@ -73,25 +75,39 @@ class NHKArticle(id: String, hasVideo: Boolean) {
     private fun parseArticleFromHtml(html: String): String {
         try {
             val doc = Jsoup.parse(html)
-            val links = doc.select(".dicWin")
+
+            val links = doc.select("a.dicWin")
             links.forEach { link ->
-                // remove <rt> tags to get the actual vocabulary without furigana
-                link.select("rt").forEach() {
+                // remove <rt> tags to get the actual vocabulary without furigana (use a copy so we don't lose furigana on the actual text)
+                val linkCopy = link.clone()
+                linkCopy.select("rt").forEach() {
                     it.remove()
                 }
-                val vocabulary = link.text()
+                val vocabulary = linkCopy.text()
 
                 // replace javascript links with jisho.org links
                 link.attr("href", "http://jisho.org/search/$vocabulary")
             }
+
             return doc.select("#newsarticle").first().html()
         } catch (e: Exception) {
             return "Could not load article"
         }
     }
 
+    private fun addStylesheet(html: String): String {
+        val style = "<style>" +
+                ".colorL { color : #0041ff; }" +
+                ".colorC { color : #08a2f1; }" +
+                ".colorN { color : #b817af; }" +
+                "a.dicWin { color : black; }" +
+                "p { font-size: 125%; }" +
+                "</style>"
+        return "$style$html"
+    }
+
     private fun saveArticleToInternalStorage(activity: Activity, html: String) {
-        var output : OutputStreamWriter? = null
+        var output: OutputStreamWriter? = null
         try {
             output = activity.openFileOutput("$articleId.html", Context.MODE_PRIVATE).writer(Charsets.UTF_8)
             output.write(html)
