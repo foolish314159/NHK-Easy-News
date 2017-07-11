@@ -85,8 +85,8 @@ class NHKArticle(id: String, hasVideo: Boolean) {
                 }
                 val vocabulary = linkCopy.text()
 
-                // replace javascript links with jisho.org links
-                link.attr("href", "http://jisho.org/search/$vocabulary")
+                // replace href with the fake URL including vocabulary, will be used by Dictionary
+                link.attr("href", "http://translate.this/$vocabulary")
             }
 
             return doc.select("#newsarticle").first().html()

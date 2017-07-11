@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        this.articleWebView.webViewClient = MyWebViewClient()
+        this.articleWebView.webViewClient = NHKArticleWebViewClient(URLBasedDictionary.tangorin(articleWebView))
 
         val testArticle = NHKArticle("k10011047501000", false)
         testArticle.loadArticleText(this) { response ->
