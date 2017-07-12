@@ -2,18 +2,20 @@ package com.github.foolish314159.nhkeasynews
 
 import android.app.Activity
 import android.content.Context
+import android.os.Parcel
+import android.os.Parcelable
 import org.jsoup.Jsoup
-import java.io.*
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
 /**
  * Base class for articles, deals with loading the text either locally or from web
  */
-class NHKArticle(id: String, hasVideo: Boolean) {
-
-    val articleId = id
-    val hasVideo = hasVideo
+class NHKArticle(val articleId: String, val hasVideo: Boolean) : Parcelable {
 
     fun loadArticleText(activity: Activity, handler: (String) -> Unit) {
         activity.filesDir.listFiles().forEach {
@@ -116,6 +118,32 @@ class NHKArticle(id: String, hasVideo: Boolean) {
             // if we couldn't save file, ignore and next time load from web again
         } finally {
             output?.close()
+        }
+    }
+
+    // Parcelable
+
+    constructor(parcel: Parcel) : this(
+            parcel.readString(),
+            parcel.readByte() != 0.toByte()) {
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(articleId)
+        parcel.writeByte(if (hasVideo) 1 else 0)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<NHKArticle> {
+        override fun createFromParcel(parcel: Parcel): NHKArticle {
+            return NHKArticle(parcel)
+        }
+
+        override fun newArray(size: Int): Array<NHKArticle?> {
+            return arrayOfNulls(size)
         }
     }
 
