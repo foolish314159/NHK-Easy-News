@@ -1,13 +1,11 @@
-package com.github.foolish314159.nhkeasynews
+package com.github.foolish314159.nhkeasynews.ui
 
-import android.net.Uri
 import android.os.Build
 import android.support.annotation.RequiresApi
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import java.net.URI
-import java.net.URL
+import com.github.foolish314159.nhkeasynews.translation.Dictionary
 
 /**
  * Custom WebViewClient

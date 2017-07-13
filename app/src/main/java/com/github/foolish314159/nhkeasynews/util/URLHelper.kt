@@ -1,4 +1,4 @@
-package com.github.foolish314159.nhkeasynews
+package com.github.foolish314159.nhkeasynews.util
 
 /**
  * Utility functions to access various URLs from NHK Easy News website
@@ -17,8 +17,12 @@ class URLHelper {
             return "$BASE_URL$articleId/$articleId.html"
         }
 
-        fun audioURL(articleId: String): String {
+        fun articleAudioURL(articleId: String): String {
             return "$BASE_URL$articleId/$articleId.mp3"
+        }
+
+        fun articleImageURL(articleId: String): String {
+            return "$BASE_URL$articleId/$articleId.jpg"
         }
     }
 

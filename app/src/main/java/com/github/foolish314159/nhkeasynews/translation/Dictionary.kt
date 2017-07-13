@@ -1,4 +1,4 @@
-package com.github.foolish314159.nhkeasynews
+package com.github.foolish314159.nhkeasynews.translation
 
 /**
  * Basic interface for translation, classes implementing this can use any strategy to translate

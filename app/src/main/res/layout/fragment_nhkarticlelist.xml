@@ -6,8 +6,6 @@
     android:name="com.github.foolish314159.nhkeasynews.NHKArticleItemFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
     app:layoutManager="LinearLayoutManager"
-    tools:context="com.github.foolish314159.nhkeasynews.NHKArticleListFragment"
+    tools:context="com.github.foolish314159.nhkeasynews.ui.NHKArticleListFragment"
     tools:listitem="@layout/fragment_nhkarticleitem" />

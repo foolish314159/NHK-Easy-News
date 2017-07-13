@@ -1,10 +1,13 @@
-package com.github.foolish314159.nhkeasynews
+package com.github.foolish314159.nhkeasynews.ui
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.github.foolish314159.nhkeasynews.article.NHKArticle
+import com.github.foolish314159.nhkeasynews.R
+import com.github.foolish314159.nhkeasynews.translation.URLBasedDictionary
 import kotlinx.android.synthetic.main.fragment_nhk_article.*
 
 class NHKArticleFragment : Fragment() {

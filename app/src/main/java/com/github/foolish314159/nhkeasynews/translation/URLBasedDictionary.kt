@@ -1,4 +1,4 @@
-package com.github.foolish314159.nhkeasynews
+package com.github.foolish314159.nhkeasynews.translation
 
 import android.webkit.WebView
 

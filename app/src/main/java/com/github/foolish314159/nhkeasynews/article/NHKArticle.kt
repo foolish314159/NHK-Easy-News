@@ -1,21 +1,24 @@
-package com.github.foolish314159.nhkeasynews
+package com.github.foolish314159.nhkeasynews.article
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
+import com.github.foolish314159.nhkeasynews.util.HTTPRequestHelper
+import com.github.foolish314159.nhkeasynews.util.URLHelper
 import org.jsoup.Jsoup
-import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+import java.util.*
 
 /**
  * Base class for articles, deals with loading the text either locally or from web
  */
-class NHKArticle(val articleId: String, val hasVideo: Boolean) : Parcelable {
+class NHKArticle(val articleId: String, val title: String, val date: Date) : Parcelable, Comparable<NHKArticle> {
+
+    var image : Drawable? = null
 
     fun loadArticleText(activity: Activity, handler: (String) -> Unit) {
         activity.filesDir.listFiles().forEach {
@@ -44,31 +47,21 @@ class NHKArticle(val articleId: String, val hasVideo: Boolean) : Parcelable {
     }
 
     private fun loadArticleFromWeb(activity: Activity, handler: (String) -> Unit) {
-        val thread = Thread(Runnable {
-            val articleURL = URLHelper.articleURL(articleId)
-            var connection: HttpURLConnection? = null
-            var reader: InputStreamReader? = null
-            try {
-                val url = URL(articleURL)
-                connection = url.openConnection() as HttpURLConnection
-                connection.setRequestProperty("Content-Type", "text/html; charset=utf-8")
-                reader = InputStreamReader(BufferedInputStream(connection.inputStream))
 
-                val html = reader.readText()
+        val articleURL = URLHelper.articleURL(articleId)
+        HTTPRequestHelper.requestTextFromURL(activity, articleURL) { html ->
+            val thread = Thread(Runnable {
                 val text = parseArticleFromHtml(html)
                 val styledText = addStylesheet(text)
 
                 // TODO: disabled while testing parser
                 //saveArticleToInternalStorage(activity, styledText)
+
                 activity.runOnUiThread { handler(styledText) }
-            } catch (e: Exception) {
-                activity.runOnUiThread { handler("Could not load article") }
-            } finally {
-                reader?.close()
-                connection?.disconnect()
-            }
-        })
-        thread.start()
+            })
+            thread.start()
+        }
+
     }
 
     /**
@@ -97,6 +90,7 @@ class NHKArticle(val articleId: String, val hasVideo: Boolean) : Parcelable {
         }
     }
 
+    // TODO: move to .css file
     private fun addStylesheet(html: String): String {
         val style = "<style>" +
                 ".colorL { color : #0041ff; }" +
@@ -121,16 +115,25 @@ class NHKArticle(val articleId: String, val hasVideo: Boolean) : Parcelable {
         }
     }
 
+    // Comparable
+
+    override fun compareTo(other: NHKArticle): Int {
+        // Sort articles by date
+        return this.date.compareTo(other.date)
+    }
+
     // Parcelable
 
     constructor(parcel: Parcel) : this(
             parcel.readString(),
-            parcel.readByte() != 0.toByte()) {
+            parcel.readString(),
+            Date(parcel.readLong())) {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(articleId)
-        parcel.writeByte(if (hasVideo) 1 else 0)
+        parcel.writeString(title)
+        parcel.writeLong(date.time)
     }
 
     override fun describeContents(): Int {
