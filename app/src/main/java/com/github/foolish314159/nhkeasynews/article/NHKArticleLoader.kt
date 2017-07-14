@@ -38,9 +38,16 @@ class NHKArticleLoader(val activity: Activity) {
     private fun parseJsonArticleList(json: String): List<NHKArticle> {
         val articles = ArrayList<NHKArticle>()
 
+        // TODO: remove. exit early for testing
+        var todo = 0
+
         val root = JSONArray(json).getJSONObject(0)
         val days = root.keys()
         for (day in days) {
+            if (todo > 2) {
+                break
+            }
+
             val articlesInDay = root.getJSONArray(day)
             val articleRange = 0..(articlesInDay.length() - 1)
             for (i in articleRange) {
@@ -69,6 +76,7 @@ class NHKArticleLoader(val activity: Activity) {
                         System.err.println(e.localizedMessage)
                     }
                 } finally {
+                    todo++
                     articles.add(article)
                     input?.close()
                 }

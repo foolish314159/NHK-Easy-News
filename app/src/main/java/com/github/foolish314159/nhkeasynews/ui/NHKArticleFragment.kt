@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import com.github.foolish314159.nhkeasynews.article.NHKArticle
 import com.github.foolish314159.nhkeasynews.R
 import com.github.foolish314159.nhkeasynews.translation.URLBasedDictionary
+import com.github.foolish314159.nhkeasynews.util.URLHelper
 import kotlinx.android.synthetic.main.fragment_nhk_article.*
 
 class NHKArticleFragment : Fragment() {
@@ -15,6 +16,10 @@ class NHKArticleFragment : Fragment() {
     companion object {
         const val ARG_ARTICLE = "argumentArticle"
     }
+
+    private var article: NHKArticle? = null
+    private var articleText: String? = null
+    private var loaded = false
 
     /**
      * @return true if back press was handled
@@ -31,6 +36,19 @@ class NHKArticleFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        arguments?.getParcelable<NHKArticle>(ARG_ARTICLE)?.let {
+            article = it
+
+            it.loadArticleText(activity) { response ->
+                articleText = response
+
+                // If view was created before article has been loaded, load into webview now
+                if (!loaded) {
+                    loadArticle(response)
+                }
+            }
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -39,16 +57,41 @@ class NHKArticleFragment : Fragment() {
         return view
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        loadAudio()
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        articleAudioPlayer.releasePlayer()
+    }
+
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         this.articleWebView.webViewClient = NHKArticleWebViewClient(URLBasedDictionary.jisho(articleWebView))
 
-        arguments?.getParcelable<NHKArticle>(ARG_ARTICLE)?.let { article ->
-            article.loadArticleText(activity) { response ->
-                this.articleWebView.settings.javaScriptEnabled = true
-                this.articleWebView.loadData(response, "text/html", "utf-8")
-                print(response)
-            }
+        // Try to load text into webview as soon as view has been created
+        articleText?.let {
+            loadArticle(it)
         }
+
+        loadAudio()
+    }
+
+    private fun loadAudio() {
+        // TODO: save .mp3 in internal storage
+
+        article?.let {
+            articleAudioPlayer.setupPlayer(URLHelper.articleAudioURL(it.articleId))
+        }
+    }
+
+    private fun loadArticle(text: String) {
+        this.articleWebView?.settings?.javaScriptEnabled = true
+        this.articleWebView?.loadData(text, "text/html", "utf-8")
+        loaded = true
     }
 
 }
