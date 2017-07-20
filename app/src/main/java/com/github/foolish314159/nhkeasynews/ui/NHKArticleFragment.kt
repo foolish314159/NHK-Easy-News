@@ -117,7 +117,7 @@ class NHKArticleFragment : Fragment() {
     private fun loadArticle(text: String) {
         if (!loaded) {
             this.articleWebView?.settings?.javaScriptEnabled = true
-            // TODO: why does this not work when offline?
+            // TODO: why does this not work when offline? a
             //this.articleWebView?.loadData(URLEncoder.encode(text).replace("\\+", " "), "text/html", "utf-8")
             this.articleWebView?.loadDataWithBaseURL(null, text, "text/html", "utf-8", null)
             loaded = true
