@@ -1,7 +1,7 @@
 package com.github.foolish314159.nhkeasynews.article
 
 import android.app.Activity
-import android.graphics.drawable.Drawable
+import android.graphics.BitmapFactory
 import com.github.foolish314159.nhkeasynews.util.HTTPRequestHelper
 import com.github.foolish314159.nhkeasynews.util.URLHelper
 import org.json.JSONArray
@@ -64,14 +64,14 @@ class NHKArticleLoader(val activity: Activity) {
                     // TODO: Cache images locally
                     // TODO: Notify UI with single articles instead of waiting till everything finished
                     input = URL(imageUrl).content as InputStream
-                    val drawable = Drawable.createFromStream(input, "src")
-                    article.image = drawable
+                    var bitmap = BitmapFactory.decodeStream(input)
+                    article.saveImage(activity, bitmap)
                 } catch (e: Exception) {
                     try {
                         val imageUrl = articleObj.getString(JSON_KEY_ARTICLE_IMAGE)
                         input = URL(imageUrl).content as InputStream
-                        val drawable = Drawable.createFromStream(input, "src")
-                        article.image = drawable
+                        var bitmap = BitmapFactory.decodeStream(input)
+                        article.saveImage(activity, bitmap)
                     } catch (e: Exception) {
                         System.err.println(e.localizedMessage)
                     }

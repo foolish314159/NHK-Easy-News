@@ -2,13 +2,18 @@ package com.github.foolish314159.nhkeasynews.article
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
 import com.github.foolish314159.nhkeasynews.util.HTTPRequestHelper
 import com.github.foolish314159.nhkeasynews.util.URLHelper
+import com.orm.SugarRecord
+import com.orm.dsl.Ignore
 import org.jsoup.Jsoup
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.util.*
@@ -16,9 +21,34 @@ import java.util.*
 /**
  * Base class for articles, deals with loading the text either locally or from web
  */
-class NHKArticle(val articleId: String, val title: String, val date: Date) : Parcelable, Comparable<NHKArticle> {
+class NHKArticle(val articleId: String, val title: String, val date: Date) : SugarRecord(), Parcelable, Comparable<NHKArticle> {
 
-    var image : Drawable? = null
+    @Ignore private var image: Drawable? = null
+
+    fun localImagePath(activity: Activity): String {
+        val folder = activity.filesDir.absolutePath
+        return "$folder/$articleId.jpg"
+    }
+
+    fun image(activity: Activity): Drawable? {
+        if (image != null) {
+            return image
+        } else {
+            // Try to load from internal storage
+            image = Drawable.createFromPath(localImagePath(activity))
+            return image
+        }
+    }
+
+    fun saveImage(activity: Activity, bitmap: Bitmap) {
+        try {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, activity.openFileOutput("$articleId.jpg", Context.MODE_PRIVATE))
+            image = BitmapDrawable(activity.resources, bitmap)
+        } catch (fileNotFound: FileNotFoundException) {
+            // ignore
+        }
+    }
+
 
     fun loadArticleText(activity: Activity, handler: (String) -> Unit) {
         activity.filesDir.listFiles().forEach {
@@ -47,21 +77,18 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Par
     }
 
     private fun loadArticleFromWeb(activity: Activity, handler: (String) -> Unit) {
-
         val articleURL = URLHelper.articleURL(articleId)
         HTTPRequestHelper.requestTextFromURL(activity, articleURL) { html ->
             val thread = Thread(Runnable {
                 val text = parseArticleFromHtml(html)
                 val styledText = addStylesheet(text)
 
-                // TODO: disabled while testing parser
-                //saveArticleToInternalStorage(activity, styledText)
+                saveArticleToInternalStorage(activity, styledText)
 
                 activity.runOnUiThread { handler(styledText) }
             })
             thread.start()
         }
-
     }
 
     /**
@@ -127,8 +154,7 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Par
     constructor(parcel: Parcel) : this(
             parcel.readString(),
             parcel.readString(),
-            Date(parcel.readLong())) {
-    }
+            Date(parcel.readLong()))
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(articleId)

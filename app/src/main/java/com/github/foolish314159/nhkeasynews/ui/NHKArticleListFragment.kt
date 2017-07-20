@@ -41,7 +41,7 @@ class NHKArticleListFragment : Fragment() {
             val layoutManager = LinearLayoutManager(context)
             recyclerView.layoutManager = layoutManager
             recyclerView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
-            adapter = NHKArticleListRecyclerViewAdapter(articles, listener)
+            adapter = NHKArticleListRecyclerViewAdapter(activity, articles, listener)
             recyclerView.adapter = adapter
         }
         return view

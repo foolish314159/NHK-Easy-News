@@ -1,5 +1,6 @@
 package com.github.foolish314159.nhkeasynews.ui
 
+import android.app.Activity
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -11,7 +12,7 @@ import com.github.foolish314159.nhkeasynews.ui.NHKArticleListFragment.OnListFrag
 import se.fekete.furiganatextview.FuriganaView
 import se.fekete.furiganatextview.utils.FuriganaUtils
 
-class NHKArticleListRecyclerViewAdapter(private val values: List<NHKArticle>, private val listener: OnListFragmentInteractionListener?) : RecyclerView.Adapter<NHKArticleListRecyclerViewAdapter.ViewHolder>() {
+class NHKArticleListRecyclerViewAdapter(private val activity: Activity, private val values: List<NHKArticle>, private val listener: OnListFragmentInteractionListener?) : RecyclerView.Adapter<NHKArticleListRecyclerViewAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -23,7 +24,7 @@ class NHKArticleListRecyclerViewAdapter(private val values: List<NHKArticle>, pr
         holder.item = values[position]
         val rubyText = holder.item?.title
         holder.contentView.updateText(FuriganaUtils.parseRuby(rubyText))
-        val img = holder.item?.image
+        val img = holder.item?.image(activity)
         holder.imageView.setImageDrawable(img)
 
         holder.view.setOnClickListener {
