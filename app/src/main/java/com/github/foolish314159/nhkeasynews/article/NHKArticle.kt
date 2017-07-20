@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import com.github.foolish314159.nhkeasynews.util.HTTPRequestHelper
@@ -23,27 +24,18 @@ import java.util.*
  */
 class NHKArticle(val articleId: String, val title: String, val date: Date) : SugarRecord(), Parcelable, Comparable<NHKArticle> {
 
-    @Ignore private var image: Drawable? = null
-
-    fun localImagePath(activity: Activity): String {
-        val folder = activity.filesDir.absolutePath
-        return "$folder/$articleId.jpg"
+    constructor() : this("", "", Date()) {
+        // empty for SugarRecord
     }
 
-    fun image(activity: Activity): Drawable? {
-        if (image != null) {
-            return image
-        } else {
-            // Try to load from internal storage
-            image = Drawable.createFromPath(localImagePath(activity))
-            return image
-        }
+    fun imageUri(activity: Activity): String {
+        val folder = activity.filesDir.absolutePath
+        return "file://$folder/$articleId.jpg"
     }
 
     fun saveImage(activity: Activity, bitmap: Bitmap) {
         try {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, activity.openFileOutput("$articleId.jpg", Context.MODE_PRIVATE))
-            image = BitmapDrawable(activity.resources, bitmap)
         } catch (fileNotFound: FileNotFoundException) {
             // ignore
         }
@@ -52,7 +44,7 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Sug
 
     fun loadArticleText(activity: Activity, handler: (String) -> Unit) {
         activity.filesDir.listFiles().forEach {
-            if (it.name.contains(articleId)) {
+            if (it.name.contains("$articleId.html")) {
                 // load from local file, if article has been opened
                 loadArticleFromInternalStorage(activity, it, handler)
                 return
@@ -65,7 +57,7 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Sug
     private fun loadArticleFromInternalStorage(activity: Activity, file: File, handler: (String) -> Unit) {
         var reader: InputStreamReader? = null
         try {
-            reader = InputStreamReader(file.inputStream())
+            reader = InputStreamReader(file.inputStream(), Charsets.UTF_8)
             val text = reader.readText()
             handler(text)
         } catch (e: Exception) {
@@ -78,16 +70,18 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Sug
 
     private fun loadArticleFromWeb(activity: Activity, handler: (String) -> Unit) {
         val articleURL = URLHelper.articleURL(articleId)
-        HTTPRequestHelper.requestTextFromURL(activity, articleURL) { html ->
-            val thread = Thread(Runnable {
-                val text = parseArticleFromHtml(html)
-                val styledText = addStylesheet(text)
+        HTTPRequestHelper.requestTextFromURL(activity, articleURL) {
+            it?.let { html ->
+                val thread = Thread(Runnable {
+                    val text = parseArticleFromHtml(html)
+                    val styledText = addStylesheet(text)
 
-                saveArticleToInternalStorage(activity, styledText)
+                    saveArticleToInternalStorage(activity, styledText)
 
-                activity.runOnUiThread { handler(styledText) }
-            })
-            thread.start()
+                    activity.runOnUiThread { handler(styledText) }
+                })
+                thread.start()
+            }
         }
     }
 
@@ -165,6 +159,7 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Sug
     override fun describeContents(): Int {
         return 0
     }
+
 
     companion object CREATOR : Parcelable.Creator<NHKArticle> {
         override fun createFromParcel(parcel: Parcel): NHKArticle {

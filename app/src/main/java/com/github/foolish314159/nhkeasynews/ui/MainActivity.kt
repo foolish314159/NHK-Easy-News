@@ -10,13 +10,14 @@ import android.view.Menu
 import android.view.MenuItem
 import com.github.foolish314159.nhkeasynews.article.NHKArticle
 import com.github.foolish314159.nhkeasynews.R
+import com.orm.SugarContext
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, NHKArticleListFragment.OnListFragmentInteractionListener {
 
-    private var drawerToggle : ActionBarDrawerToggle? = null
-    internal var currentFragment : Fragment? = null
+    private var drawerToggle: ActionBarDrawerToggle? = null
+    internal var currentFragment: Fragment? = null
 
     override fun onListFragmentInteraction(item: NHKArticle) {
         currentFragment = NHKArticleFragment()

@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.facebook.drawee.view.SimpleDraweeView
 import com.github.foolish314159.nhkeasynews.R
 import com.github.foolish314159.nhkeasynews.article.NHKArticle
 import com.github.foolish314159.nhkeasynews.ui.NHKArticleListFragment.OnListFragmentInteractionListener
@@ -24,8 +25,8 @@ class NHKArticleListRecyclerViewAdapter(private val activity: Activity, private 
         holder.item = values[position]
         val rubyText = holder.item?.title
         holder.contentView.updateText(FuriganaUtils.parseRuby(rubyText))
-        val img = holder.item?.image(activity)
-        holder.imageView.setImageDrawable(img)
+        val uri = holder.item?.imageUri(activity)
+        holder.imageView.setImageURI(uri)
 
         holder.view.setOnClickListener {
             holder.item?.let {
@@ -40,7 +41,7 @@ class NHKArticleListRecyclerViewAdapter(private val activity: Activity, private 
 
     inner class ViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val contentView: FuriganaView = view.findViewById<View>(R.id.item_articleTitle) as FuriganaView
-        val imageView: ImageView = view.findViewById<View>(R.id.item_articleImage) as ImageView
+        val imageView: SimpleDraweeView = view.findViewById<View>(R.id.item_articleImage) as SimpleDraweeView
         var item: NHKArticle? = null
     }
 }

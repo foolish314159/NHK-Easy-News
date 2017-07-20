@@ -1,5 +1,8 @@
 package com.github.foolish314159.nhkeasynews.ui
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
@@ -83,8 +86,17 @@ class NHKArticleFragment : Fragment() {
     private fun loadAudio() {
         // TODO: save .mp3 in internal storage
 
-        article?.let {
-            articleAudioPlayer.setupPlayer(URLHelper.articleAudioURL(it.articleId))
+        (this@NHKArticleFragment.activity.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.let { manager ->
+            manager.activeNetworkInfo?.let { info ->
+                if (info.isConnected) {
+                    val thread = Thread(Runnable {
+                        article?.let {
+                            articleAudioPlayer.setupPlayer(URLHelper.articleAudioURL(it.articleId))
+                        }
+                    })
+                    thread.start()
+                }
+            }
         }
     }
 

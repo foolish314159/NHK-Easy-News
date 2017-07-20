@@ -15,7 +15,7 @@ class HTTPRequestHelper {
         /** Read content from GET request to URL. Request is executed on background thread.
          * @param handler called on UI thread when result is available
          * **/
-        fun requestTextFromURL(activity: Activity, urlString: String, contentType: String = CONTENT_TYPE_HTML_UTF8, handler: (String) -> Unit) {
+        fun requestTextFromURL(activity: Activity, urlString: String, contentType: String = CONTENT_TYPE_HTML_UTF8, handler: (String?) -> Unit) {
             val thread = Thread(Runnable {
                 var connection: HttpURLConnection? = null
                 var reader: InputStreamReader? = null
@@ -28,7 +28,7 @@ class HTTPRequestHelper {
                     val html = reader.readText()
                     activity.runOnUiThread { handler(html) }
                 } catch (e: Exception) {
-                    activity.runOnUiThread { handler("Could not load article") }
+                    activity.runOnUiThread { handler(null) }
                 } finally {
                     reader?.close()
                     connection?.disconnect()

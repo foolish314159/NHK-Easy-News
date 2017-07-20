@@ -4,11 +4,11 @@ import android.app.Activity
 import android.graphics.BitmapFactory
 import com.github.foolish314159.nhkeasynews.util.HTTPRequestHelper
 import com.github.foolish314159.nhkeasynews.util.URLHelper
+import com.github.foolish314159.nhkeasynews.util.contains
 import org.json.JSONArray
 import java.io.InputStream
 import java.net.URL
 import java.text.SimpleDateFormat
-import java.util.*
 
 /**
  * Loads NHK articles both from internal storage and web
@@ -24,67 +24,62 @@ class NHKArticleLoader(val activity: Activity) {
     private val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
     private val DateFormatter = SimpleDateFormat(DATE_FORMAT)
 
-    fun articlesFromWeb(handler: (List<NHKArticle>) -> Unit) {
+    /**
+     * Load articles from Web and notify handler as soon as an article is read to be displayed
+     */
+    fun articlesFromWeb(alreadyLoaded: List<NHKArticle>, handler: (NHKArticle) -> Unit) {
         val url = URLHelper.newsListURL()
-        HTTPRequestHelper.requestTextFromURL(activity, url, HTTPRequestHelper.CONTENT_TYPE_JSON_UTF8) { json ->
-            val thread = Thread(Runnable {
-                val articles = parseJsonArticleList(json)
-                activity.runOnUiThread { handler(articles) }
-            })
-            thread.start()
+        HTTPRequestHelper.requestTextFromURL(activity, url, HTTPRequestHelper.CONTENT_TYPE_JSON_UTF8) {
+            it?.let { json ->
+                val thread = Thread(Runnable {
+                    parseJsonArticleList(alreadyLoaded, json) { article ->
+                        activity.runOnUiThread { handler(article) }
+                    }
+                })
+                thread.start()
+            }
         }
     }
 
-    private fun parseJsonArticleList(json: String): List<NHKArticle> {
-        val articles = ArrayList<NHKArticle>()
-
-        // TODO: remove. exit early for testing
-        var todo = 0
-
+    private fun parseJsonArticleList(alreadyLoaded: List<NHKArticle>, json: String, handler: (NHKArticle) -> Unit) {
         val root = JSONArray(json).getJSONObject(0)
         val days = root.keys()
         for (day in days) {
-            if (todo > 2) {
-                break
-            }
-
             val articlesInDay = root.getJSONArray(day)
             val articleRange = 0..(articlesInDay.length() - 1)
             for (i in articleRange) {
                 val articleObj = articlesInDay.getJSONObject(i)
+                val articleId = articleObj.getString(JSON_KEY_ARTICLE_ID)
+                if (alreadyLoaded.contains { it.articleId == articleId }) {
+                    continue
+                }
+
                 val articleDate = DateFormatter.parse(articleObj.getString(JSON_KEY_ARTICLE_TIME))
                 val articleTitle = articleObj.getString(JSON_KEY_ARTICLE_TITLE)
-                val articleId = articleObj.getString(JSON_KEY_ARTICLE_ID)
                 val article = NHKArticle(articleId, articleTitle, articleDate)
 
                 var input: InputStream? = null
                 try {
                     val imageUrl = URLHelper.articleImageURL(articleId)
-
-                    // TODO: Cache images locally
-                    // TODO: Notify UI with single articles instead of waiting till everything finished
                     input = URL(imageUrl).content as InputStream
-                    var bitmap = BitmapFactory.decodeStream(input)
+                    val bitmap = BitmapFactory.decodeStream(input)
                     article.saveImage(activity, bitmap)
                 } catch (e: Exception) {
                     try {
                         val imageUrl = articleObj.getString(JSON_KEY_ARTICLE_IMAGE)
                         input = URL(imageUrl).content as InputStream
-                        var bitmap = BitmapFactory.decodeStream(input)
+                        val bitmap = BitmapFactory.decodeStream(input)
                         article.saveImage(activity, bitmap)
                     } catch (e: Exception) {
-                        System.err.println(e.localizedMessage)
+                        // TODO: try another way to load image (apparently there are 3 different kind of URLs and image can have)
                     }
                 } finally {
-                    todo++
-                    articles.add(article)
+                    article.save()
+                    handler(article)
                     input?.close()
                 }
             }
         }
-
-        articles.sort()
-        return articles
     }
 
 }

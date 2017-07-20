@@ -12,21 +12,29 @@ import android.view.ViewGroup
 import com.github.foolish314159.nhkeasynews.R
 import com.github.foolish314159.nhkeasynews.article.NHKArticle
 import com.github.foolish314159.nhkeasynews.article.NHKArticleLoader
+import com.github.foolish314159.nhkeasynews.util.addSorted
+import com.github.foolish314159.nhkeasynews.util.contains
+import com.orm.SugarRecord
 
 class NHKArticleListFragment : Fragment() {
 
     private var listener: OnListFragmentInteractionListener? = null
     private var articles = ArrayList<NHKArticle>()
-    private var adapter : NHKArticleListRecyclerViewAdapter? = null
+    private var adapter: NHKArticleListRecyclerViewAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Load already downloaded articles from database
+        val localArticles = SugarRecord.listAll(NHKArticle::class.java)
+        articles.addAll(localArticles)
+
         val loader = NHKArticleLoader(activity)
-        loader.articlesFromWeb { list ->
-            articles.clear()
-            articles.addAll(list)
-            adapter?.notifyDataSetChanged()
+        loader.articlesFromWeb(articles) { article ->
+            if (!articles.contains { it.articleId == article.articleId }) {
+                articles.add(article)
+                adapter?.notifyDataSetChanged()
+            }
         }
     }
 
