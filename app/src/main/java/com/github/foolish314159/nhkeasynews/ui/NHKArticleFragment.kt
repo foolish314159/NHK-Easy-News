@@ -11,8 +11,10 @@ import android.view.ViewGroup
 import com.github.foolish314159.nhkeasynews.article.NHKArticle
 import com.github.foolish314159.nhkeasynews.R
 import com.github.foolish314159.nhkeasynews.translation.URLBasedDictionary
+import com.github.foolish314159.nhkeasynews.util.HTTPRequestHelper
 import com.github.foolish314159.nhkeasynews.util.URLHelper
 import kotlinx.android.synthetic.main.fragment_nhk_article.*
+import java.net.URLEncoder
 
 class NHKArticleFragment : Fragment() {
 
@@ -23,6 +25,7 @@ class NHKArticleFragment : Fragment() {
     private var article: NHKArticle? = null
     private var articleText: String? = null
     private var loaded = false
+    private var audioLoaded = false
 
     /**
      * @return true if back press was handled
@@ -69,6 +72,7 @@ class NHKArticleFragment : Fragment() {
     override fun onStop() {
         super.onStop()
 
+        audioLoaded = false
         articleAudioPlayer.releasePlayer()
     }
 
@@ -84,26 +88,38 @@ class NHKArticleFragment : Fragment() {
     }
 
     private fun loadAudio() {
-        // TODO: save .mp3 in internal storage
-
-        (this@NHKArticleFragment.activity.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.let { manager ->
-            manager.activeNetworkInfo?.let { info ->
-                if (info.isConnected) {
-                    val thread = Thread(Runnable {
-                        article?.let {
-                            articleAudioPlayer.setupPlayer(URLHelper.articleAudioURL(it.articleId))
+        if (!audioLoaded) {
+            article?.let {
+                activity?.let { act ->
+                    if (it.hasLocalAudio(act)) {
+                        audioLoaded = true
+                        articleAudioPlayer.setupPlayer(it.soundUri(act))
+                    } else {
+                        (act.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.let { manager ->
+                            manager.activeNetworkInfo?.let { info ->
+                                if (info.isConnected) {
+                                    val fileName = it.articleId
+                                    HTTPRequestHelper.downloadUrlToFileAsync(act, URLHelper.articleAudioURL(it.articleId), "$fileName.mp3") { success ->
+                                        if (success) {
+                                            audioLoaded = true
+                                            articleAudioPlayer.setupPlayer(it.soundUri(act))
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    })
-                    thread.start()
+                    }
                 }
             }
         }
     }
 
     private fun loadArticle(text: String) {
-        this.articleWebView?.settings?.javaScriptEnabled = true
-        this.articleWebView?.loadData(text, "text/html", "utf-8")
-        loaded = true
+        if (!loaded) {
+            this.articleWebView?.settings?.javaScriptEnabled = true
+            this.articleWebView?.loadData(URLEncoder.encode(text).replace("\\+", " "), "text/html", "utf-8")
+            loaded = true
+        }
     }
 
 }

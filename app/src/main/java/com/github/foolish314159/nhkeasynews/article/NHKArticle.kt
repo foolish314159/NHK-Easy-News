@@ -33,6 +33,16 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Sug
         return "file://$folder/$articleId.jpg"
     }
 
+    fun soundUri(activity: Activity): String {
+        val folder = activity.filesDir.absolutePath
+        return "file://$folder/$articleId.mp3"
+    }
+
+    fun hasLocalAudio(activity: Activity): Boolean {
+        val folder = activity.filesDir.absolutePath
+        return File("$folder/$articleId.mp3").exists()
+    }
+
     fun saveImage(activity: Activity, bitmap: Bitmap) {
         try {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, activity.openFileOutput("$articleId.jpg", Context.MODE_PRIVATE))
@@ -96,7 +106,7 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Sug
             links.forEach { link ->
                 // remove <rt> tags to get the actual vocabulary without furigana (use a copy so we don't lose furigana on the actual text)
                 val linkCopy = link.clone()
-                linkCopy.select("rt").forEach() {
+                linkCopy.select("rt").forEach {
                     it.remove()
                 }
                 val vocabulary = linkCopy.text()
