@@ -3,15 +3,11 @@ package com.github.foolish314159.nhkeasynews.article
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import com.github.foolish314159.nhkeasynews.util.HTTPRequestHelper
 import com.github.foolish314159.nhkeasynews.util.URLHelper
 import com.orm.SugarRecord
-import com.orm.dsl.Ignore
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileNotFoundException
@@ -150,7 +146,7 @@ class NHKArticle(val articleId: String, val title: String, val date: Date) : Sug
 
     override fun compareTo(other: NHKArticle): Int {
         // Sort articles by date
-        return this.date.compareTo(other.date)
+        return other.date.compareTo(this.date)
     }
 
     // Parcelable

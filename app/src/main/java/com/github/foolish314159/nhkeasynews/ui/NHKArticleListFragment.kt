@@ -28,11 +28,12 @@ class NHKArticleListFragment : Fragment() {
         // Load already downloaded articles from database
         val localArticles = SugarRecord.listAll(NHKArticle::class.java)
         articles.addAll(localArticles)
+        articles.sort()
 
         val loader = NHKArticleLoader(activity)
         loader.articlesFromWeb(articles) { article ->
             if (!articles.contains { it.articleId == article.articleId }) {
-                articles.add(article)
+                articles.add(0, article)
                 adapter?.notifyDataSetChanged()
             }
         }
